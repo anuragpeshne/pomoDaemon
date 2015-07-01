@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define SOCK_PATH "/tmp/pomoSock"
+#define SOCK_PATH "/tmp/pomo.sock"
 
 int main() {
   int rSocketFd, len, t;
@@ -27,12 +27,14 @@ int main() {
 
   if ((t=recv(rSocketFd, statusMsg, 100, 0)) > 0) {
     statusMsg[t] = '\0';
-    printf("echo> %s", statusMsg);
+    printf("%s\n", statusMsg);
   } else {
     if (t < 0) perror("recv");
     else printf("Server closed connection\n");
     exit(1);
   }
+
+  close(rSocketFd);
 
   return 0;
 }

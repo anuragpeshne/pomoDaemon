@@ -11,11 +11,11 @@
 #include <math.h>
 #include <fcntl.h>
 
-#define SOCK_PATH "/tmp/pomoSock"
-#define TIMER (1 * 60)
-#define TIMER_SPEED 1
+#define SOCK_PATH "/tmp/pomo.sock"
+#define TIMER (25 * 60)
 #define PBAR_RESOLUTION 20
-#define PSTR_SIZE (1 + 1 + 2 + PBAR_RESOLUTION + 1)
+//two for elapsed time digit, one for space, two for sq brackets, and resolution
+#define PSTR_SIZE (2 + 1 + 2 + PBAR_RESOLUTION + 1)
 
 void tick(int);
 void resetTimer();
@@ -79,7 +79,7 @@ int main() {
     perror("socket");
     exit(1);
   }
-  //fcntl(lSocketFd, F_SETFL, O_NONBLOCK);
+  fcntl(lSocketFd, F_SETFL, O_NONBLOCK);
   local.sun_family = AF_UNIX;
   strcpy(local.sun_path, SOCK_PATH);
   unlink(local.sun_path);
@@ -89,9 +89,13 @@ int main() {
     exit(1);
   }
   t = sizeof(remote);
+  if (listen(lSocketFd, 1) == -1) {
+    perror("listen");
+    exit(1);
+  }
 
   while(1) {
-    sleep(1 / TIMER_SPEED);
+    sleep(1);
     tick(TIMER);
 
     if ((rSocketFd = accept(lSocketFd, (struct sockaddr *)&remote, &t)) != -1) {
@@ -104,12 +108,11 @@ int main() {
     }
   }
   // you shall not pass - through this code path ever!
-  printf("exiting");
+  printf("exiting\n");
   return 0;
 }
 
 void tick(int totalTime) {
-  printf("tick");
   if (elapsedTime < totalTime) {
     elapsedTime++;
   }
@@ -124,7 +127,13 @@ void getPBarStr(char* statusStr) {
   int i, strIndex;
 
   strIndex = 0;
-  statusStr[strIndex++] = (char) elapsedTime;
+  if (elapsedTime < 10) {
+    statusStr[strIndex++] = '0';
+  } else {
+    statusStr[strIndex++] = (elapsedTime / 60) / 10 + 48; //add 48 to get ascii
+  }
+  statusStr[strIndex++] = (elapsedTime / 60) % 10 + 48;
+
   statusStr[strIndex++] = ' ';
 
   coloredPieces = (int)floor((PBAR_RESOLUTION * elapsedTime) / TIMER);
