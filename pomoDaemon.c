@@ -66,6 +66,7 @@ int main() {
   // Close stdin. stdout and stderr
   close(STDIN_FILENO);
   //close(STDERR_FILENO);
+  close(STDOUT_FILENO);
 
   resetSa.sa_handler = resetTimer;
   resetSa.sa_flags = 0;
